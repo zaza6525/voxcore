@@ -1,7 +1,7 @@
 """Tests de base VoxCore."""
 import pytest
-from voxcore.config import load_config, DEFAULT_CONFIG
-from voxcore.tts import sanitize, split_text
+from voxcore_local.config import load_config, DEFAULT_CONFIG
+from voxcore_local.tts import sanitize, split_text
 
 
 def test_default_config():

@@ -1,7 +1,7 @@
 """Tests microphone + VAD (numpy only — no sounddevice needed)."""
 import pytest
 import numpy as np
-from voxcore.microphone import VAD
+from voxcore_local.microphone import VAD
 
 
 def test_vad_silence():

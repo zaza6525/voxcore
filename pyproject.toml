@@ -3,7 +3,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "voxcore"
+name = "voxcore-local"
 version = "0.1.0"
 description = "Local voice assistant pipeline — STT → LLM → TTS, 100% offline"
 readme = "README.md"
@@ -38,7 +38,7 @@ dev = [
 ]
 
 [project.scripts]
-voxcore = "voxcore.cli:main"
+voxcore = "voxcore_local.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["voxcore*"]

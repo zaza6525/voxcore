@@ -1,7 +1,7 @@
 """Tests pipeline + config + TTS router."""
 import pytest
-from voxcore.config import load_config, DEFAULT_CONFIG
-from voxcore.tts import sanitize, split_text, VoxtralTTS
+from voxcore_local.config import load_config, DEFAULT_CONFIG
+from voxcore_local.tts import sanitize, split_text, VoxtralTTS
 
 
 def test_config_defaults():
