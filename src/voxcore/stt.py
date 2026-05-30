@@ -15,14 +15,20 @@ class STTEngine:
     @property
     def model(self):
         if self._model is None:
-            device = "cuda" if self.device == "auto" and os.environ.get("CUDA_VISIBLE_DEVICES") else self.device
-            if device == "auto":
-                device = "cuda"
-            self._model = WhisperModel(
-                self.model_size,
-                device=device,
-                compute_type="int8" if device == "cpu" else "float16",
-            )
+            try:
+                self._model = WhisperModel(
+                    self.model_size,
+                    device=self.device,
+                    compute_type="int8" if self.device == "cpu" else "float16",
+                )
+            except RuntimeError:
+                # Fallback CPU si CUDA OOM (LLM prend déjà la VRAM)
+                print(f"⚠️  STT: {self.device} indisponible, fallback CPU int8")
+                self._model = WhisperModel(
+                    self.model_size,
+                    device="cpu",
+                    compute_type="int8",
+                )
         return self._model
     
     def transcribe(self, audio_path: str, language: Optional[str] = None) -> str:
