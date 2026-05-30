@@ -29,6 +29,10 @@ DEFAULT_CONFIG = {
         "format": "mp3",
         "dir": "/tmp/voxcore",
     },
+    "memory": {
+        "short_term_turns": 20,
+        "filter_threshold": 0.3,
+    },
 }
 
 
