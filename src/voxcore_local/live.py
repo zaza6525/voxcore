@@ -13,6 +13,7 @@ from .tts import VoxtralTTS, sanitize
 from .microphone import MicrophoneCapture
 from .audio_player import AudioPlayer
 from .config import load_config
+from .memory_manager import MemoryManager
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,9 @@ class LiveSession:
         self.system_prompt = cfg["llm"]["system_prompt"]
         self.max_tokens = cfg["llm"]["max_tokens"]
         
+        # Memory
+        self.memory = MemoryManager(cfg.get("memory", {}))
+        
         # State
         self._running = False
         self._listening = False
@@ -70,6 +74,7 @@ class LiveSession:
         print(f"   Langue: {self.stt.language}")
         print(f"   LLM: {self.llm.base_url}")
         print(f"   TTS: {self.tts.url}")
+        print(f"   Mémoire: active")
         print()
         
         def on_phrase(wav_bytes: bytes):
@@ -117,16 +122,33 @@ class LiveSession:
         print(f"\r🗣  Vous : {text}")
         self._listening = False
         
+        # Store user input in memory
+        self.memory.process_event(
+            content=text,
+            category="conversation",
+            source="user"
+        )
+        
         # Ajoute au historique
         self._history.append({"role": "user", "content": text})
         
-        # 2. LLM
+        # 2. LLM avec contexte mémoire injecté
         self._responding = True
         print("🤖 [réflexion...]", flush=True)
         
         try:
-            response = self.llm.chat(self._history, max_tokens=self.max_tokens)
+            context = self.memory.build_context(self._history, top_k=5)
+            messages_with_context = self.memory.inject_context(self._history, context)
+            
+            response = self.llm.chat(messages_with_context, max_tokens=self.max_tokens)
             self._history.append({"role": "assistant", "content": response})
+            
+            # Store response in memory
+            self.memory.process_event(
+                content=response,
+                category="conversation",
+                source="assistant"
+            )
             
             # Garne le historique à 20 messages max
             while len(self._history) > 21:  # 1 system + 20 exchange

@@ -11,6 +11,7 @@ from .live import LiveSession
 from .tts_router import TTSRouter
 from .microphone import MicrophoneCapture
 from .llm import LLMEngine
+from .memory_manager import MemoryManager
 
 
 @click.group()
@@ -154,36 +155,63 @@ def devices(ctx):
 @main.command()
 @click.pass_context
 def chat(ctx):
-    """Mode chat CLI (texte → texte via LLM local)."""
-    cfg = ctx.obj["config"]
-    llm = LLMEngine(
-        base_url=cfg["llm"]["base_url"],
-        model=cfg["llm"]["model"],
-        api_key=cfg["llm"]["api_key"],
-    )
+   """Mode chat CLI avec mémoire persistante (texte → texte via LLM local)."""
+   cfg = ctx.obj["config"]
+   llm = LLMEngine(
+       base_url=cfg["llm"]["base_url"],
+       model=cfg["llm"]["model"],
+       api_key=cfg["llm"]["api_key"],
+   )
     
-    history = [{"role": "system", "content": cfg["llm"]["system_prompt"]}]
+   memory = MemoryManager(cfg.get("memory", {}))
+   history = [{"role": "system", "content": cfg["llm"]["system_prompt"]}]
     
-    click.echo("💬 VoxCore Chat (Ctrl+C pour quitter)")
-    click.echo("-" * 40)
+   click.echo("💬 VoxCore Chat (Ctrl+C pour quitter)")
+   click.echo("   /stats → statistiques mémoire")
+   click.echo("   /clear → nouvelle session")
+   click.echo("-" * 40)
     
-    while True:
-        try:
-            user = click.prompt("")
-        except (KeyboardInterrupt, EOFError):
-            click.echo("\nAu revoir !")
-            break
+   while True:
+       try:
+           user = click.prompt("")
+       except (KeyboardInterrupt, EOFError):
+           click.echo("\nAu revoir !")
+           break
         
-        history.append({"role": "user", "content": user})
-        response = llm.chat(history, max_tokens=cfg["llm"]["max_tokens"])
-        history.append({"role": "assistant", "content": response})
+       if user == "/stats":
+           stats = memory.get_stats()
+           for k, v in stats.items():
+               click.echo(f"  {k}: {v}")
+           click.echo("-" * 40)
+           continue
         
-        click.echo(response)
-        click.echo("-" * 40)
+       if user == "/clear":
+           memory.new_session()
+           click.echo("Session réinitialisée (mémoire long-terme conservée)")
+           click.echo("-" * 40)
+           continue
         
-        # Garne le contexte
-        while len(history) > 21:
-            history.pop(1)
+       history.append({"role": "user", "content": user})
+        
+       # Store in memory
+       memory.process_event(content=user, category="conversation", source="user")
+        
+       # Build context with memory
+       context = memory.build_context(history, top_k=5)
+       messages = memory.inject_context(history, context)
+        
+       response = llm.chat(messages, max_tokens=cfg["llm"]["max_tokens"])
+       history.append({"role": "assistant", "content": response})
+        
+       # Store response in memory
+       memory.process_event(content=response, category="conversation", source="assistant")
+        
+       click.echo(response)
+       click.echo("-" * 40)
+        
+       # Garne le contexte
+       while len(history) > 21:
+           history.pop(1)
 
 
 if __name__ == "__main__":

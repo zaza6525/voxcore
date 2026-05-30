@@ -24,9 +24,11 @@ class LongTermMemory:
     
     def __init__(self, db_path: str = "~/.local/share/voxcore/memory.db",
                  chroma_path: str = "~/.local/share/voxcore/chroma_memory",
+                 embed_model: str = "all-MiniLM-L6-v2",
                  embedding_dim: int = 384):
         self.db_path = str(Path(db_path).expanduser())
         self.chroma_path = str(Path(chroma_path).expanduser())
+        self.embed_model = embed_model
         self.embedding_dim = embedding_dim
         
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
@@ -74,7 +76,7 @@ class LongTermMemory:
             # On utilise sentence-transformers all-MiniLM-L6-v2 (384D) par défaut
             # — léger, rapide, pas besoin de GPU
             self._embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2"
+                model_name=self.embed_model
             )
             
             self._chroma_collection = self._chroma_client.get_or_create_collection(
