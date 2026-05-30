@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voxcore"
+version = "0.1.0"
+description = "Local voice assistant pipeline — STT → LLM → TTS, 100% offline"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Ali", email = "ali@voxcore.dev"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "faster-whisper>=1.0.0",
+    "openai>=1.0.0",  # Pour l'API compatible llama.cpp / vLLM
+    "pydub>=0.25.0",
+    "requests>=2.31.0",
+    "pyyaml>=6.0",
+    "click>=8.1.0",
+    "sounddevice>=0.4.6",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.scripts]
+voxcore = "voxcore.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["voxcore*"]
